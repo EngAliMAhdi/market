@@ -9,6 +9,9 @@ class LoginController extends Controller
 {
     public function showLoginForm()
     {
+        if (Auth::check()) {
+            return redirect()->intended('/dashboard');
+        }
         return view('pages.login');
     }
     public function login(Request $request)
@@ -27,6 +30,4 @@ class LoginController extends Controller
             'phone' => 'رقم الهاتف أو كلمة المرور غير صحيحة.',
         ]);
     }
-    
 }
-

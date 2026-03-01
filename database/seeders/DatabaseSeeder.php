@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
             PaymentMethodSeeder::class,
             DepartmentSeeder::class,
             CustodySeeder::class,
+            BranchSeeder::class,
+
         ]);
     }
 }

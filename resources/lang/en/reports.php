@@ -68,5 +68,7 @@ return [
     'payment_methods' => 'Payment Methods',
     'departments' => 'Departments',
     'custody' => 'Custody',
+    'export_excel' => 'Export Excel',
+    'export_pdf' => 'Export PDF',
 
 ];

@@ -6,7 +6,25 @@
         <h2 class="text-3xl font-bold text-gray-800">
            {{ __('reports.title') }}
         </h2>
-
+<div class="flex flex-wrap gap-2">
+    <button onclick="downloadExcel()"
+        class="flex items-center gap-2 px-6 py-2 font-bold text-white rounded-lg gradient-green hover:opacity-90">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+        </svg>
+        <span data-translate="exportExcel">{{ __('reports.export_excel') }}</span>
+    </button>
+    <button onclick="downloadPDF()"
+        class="flex items-center gap-2 px-6 py-2 font-bold text-white rounded-lg gradient-bg hover:opacity-90">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+            </path>
+        </svg>
+        <span data-translate="exportPDF">{{ __('reports.export_pdf') }}</span>
+    </button>
+</div>
 
     </div>
 
@@ -304,7 +322,8 @@
                 {{ __('reports.detailed_sales') }}
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto" >
+            <div id="report-table-wrapper">
             <table class="w-full">
 
                 <thead class="bg-gray-100">
@@ -353,6 +372,7 @@
 
                 </tbody>
             </table>
+            </div>
         </div>
     </div>
 
@@ -861,67 +881,74 @@ event.month2
     }
 
     function downloadExcel() {
-    let table = document.getElementById('report-table-body').closest('table');
+
+    let table = document.querySelector('#report-table-wrapper table');
     if (!table) return;
 
     let csv = [];
-    csv.push('\uFEFF');
+    csv.push('\uFEFF'); // دعم اللغة العربية
 
-    const reportDate = document.getElementById('report-date').value ||
-    document.getElementById('report-month').value ||
-    document.getElementById('report-year').value;
-    const branchName =
-    document.getElementById('report-branch').options[document.getElementById('report-branch').selectedIndex].text;
-
-    csv.push(`"${t('reports')} - ${t('appName')}"`);
-    csv.push(`"${t('date')}: ${reportDate}", "${t('branch')}: ${branchName}"`);
+    // ===== العنوان =====
+    csv.push(`"تقرير المبيعات"`);
+    csv.push(`"تاريخ التصدير: ${new Date().toLocaleDateString('ar-EG')}"`);
     csv.push("");
 
-    const totalSales = document.getElementById('report-total-sales').textContent;
-    const totalOwned = document.getElementById('report-total-owned').textContent;
-    const totalRented = document.getElementById('report-total-rented').textContent;
-
-    csv.push(`"${t('totalSales')}", "${t('totalOwned')}", "${t('totalRented')}"`);
-    csv.push(`"${totalSales}", "${totalOwned}", "${totalRented}"`);
-    csv.push("");
-
+    // ===== رؤوس الأعمدة =====
     let headerRow = [];
-    table.querySelectorAll('thead th').forEach(th => headerRow.push(`"${th.innerText}"`));
+    table.querySelectorAll('thead th').forEach(th => {
+    headerRow.push(`"${th.innerText.trim()}"`);
+    });
     csv.push(headerRow.join(","));
 
+    // ===== البيانات =====
     table.querySelectorAll('tbody tr').forEach(tr => {
     let row = [];
-    tr.querySelectorAll('td').forEach(td => row.push(`"${td.innerText}"`));
+    tr.querySelectorAll('td').forEach((td, index) => {
+
+    // تجاهل عمود الإجراءات
+    if (index === 5) return;
+
+    row.push(`"${td.innerText.trim()}"`);
+    });
     csv.push(row.join(","));
     });
 
-    const blob = new Blob([csv.join("\n")], { type: "text/csv;charset=utf-8" });
+    // ===== إنشاء الملف =====
+    const blob = new Blob([csv.join("\n")], { type: "text/csv;charset=utf-8;" });
     const url = window.URL.createObjectURL(blob);
+
     const a = document.createElement("a");
     a.href = url;
-    a.download = `report-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `sales-report-${new Date().toISOString().split('T')[0]}.csv`;
+
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+
     window.URL.revokeObjectURL(url);
     }
 
-    function downloadPDF() {
-    const element = document.getElementById('analytics-page');
-    const opt = {
-    margin: 0.5,
-    filename: `report-${new Date().toISOString().split('T')[0]}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: '#ffffff'
-    },
-    jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
-    };
-    html2pdf().set(opt).from(element).save();
-    }
+function downloadPDF() {
 
+const element = document.getElementById('report-table-wrapper');
+
+const opt = {
+margin: 0.5,
+filename: `report-${new Date().toISOString().split('T')[0]}.pdf`,
+image: { type: 'jpeg', quality: 0.98 },
+html2canvas: {
+scale: 2,
+useCORS: true
+},
+jsPDF: {
+unit: 'in',
+format: 'a4',
+orientation: 'portrait'
+}
+};
+
+html2pdf().set(opt).from(element).save();
+}
     // ==================== TREND ANALYSIS ====================
     function renderTrendAnalysis(entries, reportType, currentPeriod) {
     const trendSection = document.getElementById('trend-analysis-section');

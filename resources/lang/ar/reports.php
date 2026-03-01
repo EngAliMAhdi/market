@@ -67,5 +67,6 @@ return [
     'payment_methods' => 'طرق الدفع',
     'departments' => 'الأقسام',
     'custody' => 'العهدة',
-
+    'export_excel' => 'تصدير Excel',
+    'export_pdf' => 'تصدير PDF',
 ];
